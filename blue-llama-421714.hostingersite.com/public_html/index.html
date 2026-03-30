@@ -1,0 +1,1029 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Polex Full — Import</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.production.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.production.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/7.23.2/babel.min.js"></script>
+<style>
+*{box-sizing:border-box;margin:0;padding:0;}
+body{font-family:Calibri,sans-serif;background:#F5F5F5;}
+@keyframes modalIn{from{opacity:0;transform:scale(.96) translateY(14px);}to{opacity:1;transform:none;}}
+@keyframes rowIn{from{opacity:0;transform:translateX(-4px);}to{opacity:1;transform:none;}}
+@keyframes cardIn{from{opacity:0;transform:translateY(12px);}to{opacity:1;transform:none;}}
+tr.dr:hover td{background:#FFF4E8!important;cursor:pointer;}
+.fb{background:#fff;border:1px solid #E8E8E8;border-radius:7px;color:#8A8A8A;cursor:pointer;font-size:12px;padding:5px 11px;font-family:Calibri,sans-serif;font-weight:600;transition:all .15s;}
+.fb:hover{border-color:#F5820A;color:#F5820A;}
+.fb.on{background:#FFF4E8;border-color:#F5820A;color:#C4640A;font-weight:700;}
+::-webkit-scrollbar{width:4px;height:4px;}
+::-webkit-scrollbar-track{background:#F5F5F5;}
+::-webkit-scrollbar-thumb{background:#BEBEBE;border-radius:4px;}
+input::placeholder{color:#BEBEBE;}
+input:focus,select:focus{border-color:#F5820A!important;outline:none;box-shadow:0 0 0 3px rgba(245,130,10,0.12);}
+.sidebar-btn{width:100%;display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:10px;border:none;background:transparent;color:#8A8A8A;cursor:pointer;font-size:14px;font-weight:500;font-family:Calibri,sans-serif;margin-bottom:3px;text-align:left;transition:all .15s;border-left:3px solid transparent;}
+.sidebar-btn.active{background:rgba(245,130,10,0.15);color:#F5820A;font-weight:700;border-left:3px solid #F5820A;}
+.sidebar-btn:hover:not(.active){color:#F5820A;background:rgba(245,130,10,0.07);}
+.btn-orange{background:#F5820A;border:none;border-radius:10px;color:#fff;cursor:pointer;font-size:14px;font-weight:700;padding:10px 20px;font-family:Calibri,sans-serif;display:inline-flex;align-items:center;gap:7px;box-shadow:0 2px 8px rgba(245,130,10,0.35);white-space:nowrap;transition:all .15s;}
+.btn-orange:hover{background:#C4640A;}
+.btn-edit{background:transparent;border:1.5px solid #F5820A;border-radius:8px;color:#F5820A;cursor:pointer;font-size:13px;font-weight:700;padding:7px 16px;font-family:Calibri,sans-serif;display:inline-flex;align-items:center;gap:6px;transition:all .15s;}
+.btn-edit:hover{background:#F5820A;color:#fff;}
+.prazo-card{border-radius:12px;padding:14px 18px;transition:box-shadow .15s;}
+.prazo-card:hover{box-shadow:0 4px 12px rgba(0,0,0,0.1);}
+.pedido-card{background:#fff;border:1px solid #E8E8E8;border-radius:14px;padding:16px 18px;cursor:pointer;transition:all .18s;animation:cardIn .3s ease both;}
+.pedido-card:hover{border-color:#F5820A;box-shadow:0 4px 16px rgba(245,130,10,0.15);transform:translateY(-2px);}
+.cat-header{display:flex;align-items:center;gap:10px;margin-bottom:14px;padding-bottom:10px;border-bottom:2px solid;}
+</style>
+</head>
+<body>
+<div id="root"></div>
+<script type="text/babel">
+const { useState, useMemo } = React;
+
+const C = {
+  orange:"#F5820A", orangeL:"#FF9A2E", orangeD:"#C4640A",
+  orangeBg:"#FFF4E8", orangeBorder:"#FDDCB4",
+  black:"#111111", dark:"#1A1A1A", dark2:"#242424", dark3:"#2E2E2E",
+  gray:"#8A8A8A", grayL:"#BEBEBE", grayBg:"#F5F5F5",
+  white:"#FFFFFF", border:"#E8E8E8",
+  red:"#E53535", redBg:"#FEF2F2",
+  green:"#16A34A", greenBg:"#F0FDF4",
+  blue:"#1D4ED8", blueBg:"#EFF6FF",
+};
+
+const INIT_PROCESSOS = [
+  {id:1,  processo:"CAD002",   chegada:"",          containers:4, descricao:"Mesh Preta / Cinza",                        agente:"ALLOG",   importador:"POLEX",  fornecedor:"DAZU",    embarque:"02/07/2025", chegadaPrev:"26/08/2025", numeroBL:"",             processoWezan:"W128/25", totalPagoBRL:0,         totalAPagarBRL:0,         vencimento:null,         statusFin:null},
+  {id:2,  processo:"TAP002",   chegada:"",          containers:2, descricao:"Tapete 6060 Tapete Carvao",                 agente:"ALLOG",   importador:"GLOBAL", fornecedor:"JINSU",   embarque:"26/09/2025", chegadaPrev:"16/11/2025", numeroBL:"IM0925104409", processoWezan:"W283/25", totalPagoBRL:184385.58, totalAPagarBRL:0,         vencimento:null,         statusFin:"atracado"},
+  {id:3,  processo:"CAD003",   chegada:"",          containers:2, descricao:"Mesh Preta / Cinza",                        agente:"ALLOG",   importador:"GLOBAL", fornecedor:"DAZU",    embarque:"03/10/2025", chegadaPrev:"06/12/2025", numeroBL:"IM0925105230", processoWezan:"W269/25", totalPagoBRL:193737.58, totalAPagarBRL:0,         vencimento:null,         statusFin:"atracado"},
+  {id:4,  processo:"CAD004",   chegada:"Janeiro",   containers:2, descricao:"Mesh Preta Couro Preta Gamer Preta",        agente:"A1",      importador:"PULSAR", fornecedor:"ULTIMATE",embarque:"04/11/2025", chegadaPrev:"16/01/2026", numeroBL:"IMA1251201",   processoWezan:"W284/25", totalPagoBRL:212068.26, totalAPagarBRL:0,         vencimento:null,         statusFin:"atracado"},
+  {id:5,  processo:"CAD005",   chegada:"Janeiro",   containers:3, descricao:"Mesh Preta",                                agente:"A1",      importador:"GLOBAL", fornecedor:"DAZU",    embarque:"21/10/2025", chegadaPrev:"06/01/2026", numeroBL:"IMA1251247",   processoWezan:"W260/25", totalPagoBRL:212068.26, totalAPagarBRL:0,         vencimento:null,         statusFin:"atracado"},
+  {id:6,  processo:"MOP001",   chegada:"Janeiro",   containers:1, descricao:"MOP 8L MOP 14L",                            agente:"CONSHIP", importador:"GLOBAL", fornecedor:"WEZAN",   embarque:"20/11/2025", chegadaPrev:"06/02/2026", numeroBL:"",             processoWezan:"W292/25", totalPagoBRL:77199.52,  totalAPagarBRL:0,         vencimento:null,         statusFin:"atracado"},
+  {id:7,  processo:"CAD006",   chegada:"Janeiro",   containers:3, descricao:"Mesh Preta / Cinza / Branca",               agente:"SMX",     importador:"POLEX",  fornecedor:"DAZU",    embarque:"22/11/2025", chegadaPrev:"10/02/2026", numeroBL:"SMXIM042550",  processoWezan:"W302/25", totalPagoBRL:158432.65, totalAPagarBRL:0,         vencimento:null,         statusFin:"atracado"},
+  {id:8,  processo:"TAP003",   chegada:"Fevereiro", containers:2, descricao:"Tapete 6060 Tapete 6080",                   agente:"SMX",     importador:"GLOBAL", fornecedor:"JINSU",   embarque:"26/12/2025", chegadaPrev:"26/02/2026", numeroBL:"SMXIM043350",  processoWezan:"W306/25", totalPagoBRL:99474.60,  totalAPagarBRL:0,         vencimento:null,         statusFin:"atracado"},
+  {id:9,  processo:"FIT001",   chegada:"Fevereiro", containers:1, descricao:"Bike Spinning / Mini Stepper (2 modelos)",  agente:"A1",      importador:"POLEX",  fornecedor:"MAIBU",   embarque:"11/01/2026", chegadaPrev:"04/03/2026", numeroBL:"IMA1251410",   processoWezan:"W318/25", totalPagoBRL:91004.71,  totalAPagarBRL:0,         vencimento:null,         statusFin:"atracado"},
+  {id:10, processo:"CAD007-A", chegada:"Marco",     containers:2, descricao:"Mesh Preta / Cinza / Branca / Rosa",        agente:"SMX",     importador:"GLOBAL", fornecedor:"ULTIMATE",embarque:"15/03/2026", chegadaPrev:"01/05/2026", numeroBL:"SMXIM044616",  processoWezan:"W344/25", totalPagoBRL:206214.38, totalAPagarBRL:110557.89, vencimento:"02/04/2026", statusFin:"na_agua"},
+  {id:11, processo:"CAD007-B", chegada:"Marco",     containers:2, descricao:"Mesh Preta / Cinza / Branca / Gamer Preta", agente:"SMX",     importador:"GLOBAL", fornecedor:"ULTIMATE",embarque:"10/02/2026", chegadaPrev:"14/04/2026", numeroBL:"SMXIM044617",  processoWezan:"W344/25", totalPagoBRL:206214.38, totalAPagarBRL:110557.89, vencimento:"08/04/2026", statusFin:"na_agua"},
+  {id:12, processo:"TAP004",   chegada:"Marco",     containers:2, descricao:"Neutro / Carvao / Lavanda / Premium",       agente:"SMX",     importador:"GLOBAL", fornecedor:"JINSU",   embarque:"18/02/2026", chegadaPrev:"14/04/2026", numeroBL:"SMXIM044786",  processoWezan:"W350/25", totalPagoBRL:146223.72, totalAPagarBRL:59010.86,  vencimento:"15/04/2026", statusFin:"na_agua"},
+  {id:13, processo:"FIT002",   chegada:"Abril",     containers:2, descricao:"Bike Ergometrica 8KG / 13KG",               agente:"",        importador:"POLEX",  fornecedor:"MAIBU",   embarque:"28/02/2026", chegadaPrev:"24/04/2026", numeroBL:"IMA1261507",   processoWezan:"",        totalPagoBRL:77694.41,  totalAPagarBRL:68036.53,  vencimento:"24/04/2026", statusFin:"na_agua", highlight:true},
+  {id:14, processo:"CAD008",   chegada:"Abril",     containers:3, descricao:"Mesh Preta / Cinza / Branca",               agente:"SMX",     importador:"POLEX",  fornecedor:"ULTIMATE",embarque:"15/02/2026", chegadaPrev:"11/04/2026", numeroBL:"SMXIM045146",  processoWezan:"",        totalPagoBRL:133740.47, totalAPagarBRL:72656.18,  vencimento:"28/04/2026", statusFin:"na_agua"},
+  {id:15, processo:"TAP005",   chegada:"MAIO",      containers:2, descricao:"Neutro / Carvao / Lavanda",                 agente:"",        importador:"POLEX",  fornecedor:"JINSU",   embarque:"20/03/2026", chegadaPrev:"30/05/2026", numeroBL:"",             processoWezan:"",        totalPagoBRL:48424.59,  totalAPagarBRL:83140.46,  vencimento:"30/05/2026", statusFin:"em_producao"},
+  {id:16, processo:"CAD009",   chegada:"",          containers:3, descricao:"Cadeira Mesh Preta / Cinza / Branca",       agente:"",        importador:"GLOBAL", fornecedor:"ULTIMATE",embarque:"",           chegadaPrev:"—",          numeroBL:"",             processoWezan:"",        totalPagoBRL:110557.89, totalAPagarBRL:83140.46,  vencimento:null,         statusFin:"em_producao"},
+  {id:17, processo:"CAD010",   chegada:"",          containers:3, descricao:"Cadeira Mesh Branca / Cinza",               agente:"",        importador:"GLOBAL", fornecedor:"ULTIMATE",embarque:"",           chegadaPrev:"—",          numeroBL:"",             processoWezan:"",        totalPagoBRL:0,         totalAPagarBRL:0,         vencimento:null,         statusFin:"em_producao"},
+  {id:18, processo:"CAD011",   chegada:"",          containers:3, descricao:"Cadeira Mesh Couro",                        agente:"",        importador:"GLOBAL", fornecedor:"ULTIMATE",embarque:"",           chegadaPrev:"—",          numeroBL:"",             processoWezan:"",        totalPagoBRL:0,         totalAPagarBRL:0,         vencimento:null,         statusFin:"em_producao"},
+  {id:19, processo:"FIT003",   chegada:"",          containers:2, descricao:"Bike Spinning / Mini Stepper (2 modelos)", agente:"",        importador:"POLEX",  fornecedor:"MAIBU",   embarque:"",           chegadaPrev:"—",          numeroBL:"",             processoWezan:"",        totalPagoBRL:0,         totalAPagarBRL:0,         vencimento:null,         statusFin:"em_producao"},
+  {id:21, processo:"TAP006",   chegada:"",          containers:2, descricao:"Tapete Higiênico Neutro / Lavanda / Carvao",agente:"",        importador:"POLEX",  fornecedor:"JINSU",   embarque:"",           chegadaPrev:"—",          numeroBL:"",             processoWezan:"",        totalPagoBRL:0,         totalAPagarBRL:0,         vencimento:null,         statusFin:"em_producao"},
+];
+
+const STATUS_CFG = {
+  atracado:    {label:"Atracado",    bg:"#F0FDF4", text:"#16A34A", border:"#BBF7D0", dot:"#22C55E", icon:"⚓"},
+  na_agua:     {label:"Na Água",     bg:"#EFF6FF", text:"#1D4ED8", border:"#BFDBFE", dot:"#3B82F6", icon:"🚢"},
+  em_producao: {label:"Em Produção", bg:"#FFF4E8", text:"#C4640A", border:"#FDDCB4", dot:"#F5820A", icon:"🏭"},
+};
+const FORNEC_C={DAZU:"#0369a1",JINSU:"#be185d",ULTIMATE:"#7c3aed",WEZAN:"#c2410c",MAIBU:"#047857"};
+const IMPORT_C={POLEX:"#F5820A",GLOBAL:"#4d7c0f",PULSAR:"#dc2626"};
+const AGENTE_C={ALLOG:"#4f46e5",A1:"#F5820A",SMX:"#16a34a",CONSHIP:"#db2777"};
+const BRL=v=>new Intl.NumberFormat("pt-BR",{style:"currency",currency:"BRL"}).format(v||0);
+
+// Categorias de produto
+const CATEGORIAS = [
+  {key:"CAD", label:"Cadeiras",                  icon:"🪑", cor:"#7c3aed", corBg:"#F5F3FF", corBorder:"#DDD6FE"},
+  {key:"TAP", label:"Tapetes Higiênicos",         icon:"🟫", cor:"#be185d", corBg:"#FDF2F8", corBorder:"#FBCFE8"},
+  {key:"MOP", label:"MOP",                        icon:"🧹", cor:"#0369a1", corBg:"#F0F9FF", corBorder:"#BAE6FD"},
+  {key:"FIT", label:"Bicicletas Ergométricas",    icon:"🚴", cor:"#16A34A", corBg:"#F0FDF4", corBorder:"#BBF7D0"},
+];
+
+function parseDate(s){if(!s)return null;const[d,m,y]=s.split("/");if(!d||!m||!y)return null;return new Date(Number(y),Number(m)-1,Number(d));}
+function diasAte(s){const d=parseDate(s);if(!d)return null;const t=new Date();t.setHours(0,0,0,0);return Math.round((d-t)/86400000);}
+
+function Pill({label,map}){
+  const col=(map&&map[label])||C.gray;
+  return label
+    ?<span style={{display:"inline-block",padding:"2px 10px",borderRadius:20,fontSize:11,fontWeight:700,letterSpacing:"0.04em",background:col+"22",color:col,border:`1px solid ${col}44`}}>{label}</span>
+    :<span style={{color:C.grayL}}>—</span>;
+}
+function StatusBadge({s}){
+  if(!s)return <span style={{color:C.grayL,fontSize:12}}>—</span>;
+  const c=STATUS_CFG[s];
+  return <span style={{background:c.bg,color:c.text,border:`1px solid ${c.border}`,borderRadius:20,padding:"3px 11px",fontSize:11,fontWeight:700,whiteSpace:"nowrap"}}>
+    <span style={{display:"inline-block",width:6,height:6,borderRadius:"50%",background:c.dot,marginRight:5,verticalAlign:"middle"}}/>
+    {c.label}
+  </span>;
+}
+function Logo({size=36}){
+  return <div style={{display:"flex",alignItems:"center",gap:8}}>
+    <div style={{width:size,height:size,background:C.black,borderRadius:8,display:"flex",alignItems:"center",justifyContent:"center",border:`2px solid ${C.orange}`,flexShrink:0}}>
+      <span style={{fontSize:size*0.48,lineHeight:1}}>⚡</span>
+    </div>
+    <div>
+      <div style={{fontFamily:"Calibri,sans-serif",fontWeight:700,fontSize:size*0.44,color:C.white,lineHeight:1.05,letterSpacing:"-0.3px"}}>Polex <span style={{color:C.orange}}>Full</span></div>
+      <div style={{fontSize:9,color:C.gray,textTransform:"uppercase",letterSpacing:"0.1em"}}>Import</div>
+    </div>
+  </div>;
+}
+
+// ── CAMPOS EDITÁVEIS ──────────────────────────────────────────────────
+const EDIT_FIELDS=[
+  ["Processo",         "processo",       "text"],
+  ["Descrição",        "descricao",      "text"],
+  ["Embarque",         "embarque",       "text"],
+  ["Previsão Chegada", "chegadaPrev",    "text"],
+  ["Número BL",        "numeroBL",       "text"],
+  ["Processo Wezan",   "processoWezan",  "text"],
+  ["Vencimento",       "vencimento",     "text"],
+  ["Containers",       "containers",     "number"],
+  ["Total Pago (R$)",  "totalPagoBRL",   "number"],
+  ["Total a Pagar (R$)","totalAPagarBRL","number"],
+];
+
+// ── MODAL EDITAR PEDIDO ───────────────────────────────────────────────
+function ModalEditar({p, onSave, onClose}){
+  const [form, setForm] = useState({...p});
+  const set=(k,v)=>setForm(f=>({...f,[k]:v}));
+  const inp={border:`1px solid ${C.border}`,borderRadius:8,padding:"9px 12px",fontSize:14,fontFamily:"Calibri,sans-serif",color:C.black,outline:"none",background:C.white,width:"100%"};
+  const lbl={fontSize:11,fontWeight:700,color:C.gray,textTransform:"uppercase",letterSpacing:"0.07em",fontFamily:"Calibri,sans-serif",marginBottom:4,display:"block"};
+  return <div onClick={onClose} style={{position:"fixed",inset:0,background:"rgba(0,0,0,0.65)",backdropFilter:"blur(6px)",zIndex:400,display:"flex",alignItems:"center",justifyContent:"center",padding:20}}>
+    <div onClick={e=>e.stopPropagation()} style={{background:C.white,borderRadius:20,width:"100%",maxWidth:640,maxHeight:"92vh",overflowY:"auto",boxShadow:"0 30px 80px rgba(0,0,0,0.3)",animation:"modalIn .25s cubic-bezier(.16,1,.3,1)"}}>
+      <div style={{padding:"20px 24px 16px",borderBottom:`1px solid ${C.border}`,display:"flex",justifyContent:"space-between",alignItems:"center",background:C.dark,borderRadius:"20px 20px 0 0"}}>
+        <div>
+          <div style={{fontFamily:"Calibri,sans-serif",fontWeight:700,fontSize:19,color:C.white}}>✏️ Editar Pedido</div>
+          <div style={{fontSize:12,color:C.gray,marginTop:2,fontFamily:"Calibri,sans-serif"}}>Processo <span style={{color:C.orange,fontWeight:700}}>{p.processo}</span></div>
+        </div>
+        <button onClick={onClose} style={{background:"rgba(255,255,255,0.08)",border:"1px solid rgba(255,255,255,0.12)",borderRadius:8,color:C.grayL,width:32,height:32,cursor:"pointer",fontSize:14}}>✕</button>
+      </div>
+      <div style={{padding:24}}>
+        <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:14}}>
+          {EDIT_FIELDS.map(([l,k,t])=>(
+            <div key={k}><label style={lbl}>{l}</label>
+              <input type={t} value={form[k]||""} onChange={e=>set(k,e.target.value)} style={inp}/>
+            </div>
+          ))}
+          {[["Fornecedor","fornecedor",Object.keys(FORNEC_C)],["Importador","importador",Object.keys(IMPORT_C)],["Agente","agente",["","ALLOG","A1","SMX","CONSHIP"]],["Status Financeiro","statusFin",["", ...Object.keys(STATUS_CFG)]]].map(([l,k,opts])=>(
+            <div key={k}><label style={lbl}>{l}</label>
+              <select value={form[k]||""} onChange={e=>set(k,e.target.value)} style={{...inp}}>
+                {opts.map(o=><option key={o} value={o}>{k==="statusFin"?(STATUS_CFG[o]?.label||"— Sem status —"):(o||"— Sem agente —")}</option>)}
+              </select>
+            </div>
+          ))}
+        </div>
+        <div style={{display:"flex",gap:10,marginTop:24,justifyContent:"flex-end"}}>
+          <button onClick={onClose} style={{background:C.grayBg,border:`1px solid ${C.border}`,borderRadius:10,padding:"10px 22px",fontSize:14,fontWeight:600,color:C.gray,cursor:"pointer",fontFamily:"Calibri,sans-serif"}}>Cancelar</button>
+          <button onClick={()=>{onSave({...form,containers:parseInt(form.containers)||1,totalPagoBRL:parseFloat(form.totalPagoBRL)||0,totalAPagarBRL:parseFloat(form.totalAPagarBRL)||0});onClose();}}
+            style={{background:C.orange,border:"none",borderRadius:10,padding:"10px 28px",fontSize:14,fontWeight:700,color:C.white,cursor:"pointer",fontFamily:"Calibri,sans-serif"}}>
+            💾 Salvar Alterações
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>;
+}
+
+// ── MODAL NOVO PEDIDO ─────────────────────────────────────────────────
+const EMPTY={processo:"",chegada:"",containers:"",descricao:"",agente:"",importador:"POLEX",fornecedor:"DAZU",embarque:"",chegadaPrev:"",numeroBL:"",processoWezan:"",totalPagoBRL:"",totalAPagarBRL:"",vencimento:"",statusFin:"em_producao"};
+function ModalNovoPedido({onSave,onClose}){
+  const [f,setF]=useState(EMPTY);
+  const set=(k,v)=>setF(p=>({...p,[k]:v}));
+  const valid=f.processo.trim()&&f.descricao.trim();
+  const inp={border:`1px solid ${C.border}`,borderRadius:8,padding:"9px 12px",fontSize:14,fontFamily:"Calibri,sans-serif",color:C.black,outline:"none",background:C.white,width:"100%"};
+  const lbl={fontSize:11,fontWeight:700,color:C.gray,textTransform:"uppercase",letterSpacing:"0.07em",fontFamily:"Calibri,sans-serif",marginBottom:4,display:"block"};
+  return <div onClick={onClose} style={{position:"fixed",inset:0,background:"rgba(0,0,0,0.6)",backdropFilter:"blur(6px)",zIndex:300,display:"flex",alignItems:"center",justifyContent:"center",padding:20}}>
+    <div onClick={e=>e.stopPropagation()} style={{background:C.white,borderRadius:20,width:"100%",maxWidth:640,maxHeight:"92vh",overflowY:"auto",boxShadow:"0 30px 80px rgba(0,0,0,0.3)",animation:"modalIn .25s cubic-bezier(.16,1,.3,1)"}}>
+      <div style={{padding:"20px 24px 16px",borderBottom:`1px solid ${C.border}`,display:"flex",justifyContent:"space-between",alignItems:"center",background:C.dark,borderRadius:"20px 20px 0 0"}}>
+        <div><div style={{fontFamily:"Calibri,sans-serif",fontWeight:700,fontSize:19,color:C.white}}>➕ Novo Pedido</div><div style={{fontSize:12,color:C.gray,marginTop:2}}>Preencha os dados do processo</div></div>
+        <button onClick={onClose} style={{background:"rgba(255,255,255,0.08)",border:"1px solid rgba(255,255,255,0.12)",borderRadius:8,color:C.grayL,width:32,height:32,cursor:"pointer",fontSize:14}}>✕</button>
+      </div>
+      <div style={{padding:24}}>
+        <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:14}}>
+          {[["Processo *","processo","text","Ex: CAD012"],["Descrição *","descricao","text","Ex: Mesh Preta"],["Embarque","embarque","text","Ex: 10/junho"],["Prev. Chegada","chegadaPrev","text","Ex: 20/agosto"],["Número BL","numeroBL","text","Ex: SMXIM045999"],["Proc. Wezan","processoWezan","text","Ex: W400/25"],["Total Pago (R$)","totalPagoBRL","number","0.00"],["Total a Pagar (R$)","totalAPagarBRL","number","0.00"],["Vencimento","vencimento","text","DD/MM/AAAA"]].map(([l,k,t,p])=>(
+            <div key={k}><label style={lbl}>{l}</label><input type={t} placeholder={p} value={f[k]} onChange={e=>set(k,e.target.value)} style={inp}/></div>
+          ))}
+          <div><label style={lbl}>Containers</label><input type="number" min="1" placeholder="Ex: 2" value={f.containers} onChange={e=>set("containers",e.target.value)} style={inp}/></div>
+          {[["Fornecedor","fornecedor",Object.keys(FORNEC_C)],["Importador","importador",Object.keys(IMPORT_C)],["Agente","agente",["","ALLOG","A1","SMX","CONSHIP"]],["Status","statusFin",Object.keys(STATUS_CFG)]].map(([l,k,opts])=>(
+            <div key={k}><label style={lbl}>{l}</label>
+              <select value={f[k]} onChange={e=>set(k,e.target.value)} style={{...inp}}>
+                {opts.map(o=><option key={o} value={o}>{k==="statusFin"?(STATUS_CFG[o]?.label||o):(o||"— Sem agente —")}</option>)}
+              </select>
+            </div>
+          ))}
+        </div>
+        <div style={{display:"flex",gap:10,marginTop:22,justifyContent:"flex-end"}}>
+          <button onClick={onClose} style={{background:C.grayBg,border:`1px solid ${C.border}`,borderRadius:10,padding:"10px 22px",fontSize:14,fontWeight:600,color:C.gray,cursor:"pointer",fontFamily:"Calibri,sans-serif"}}>Cancelar</button>
+          <button disabled={!valid} onClick={()=>{onSave({...f,id:Date.now(),containers:parseInt(f.containers)||1,totalPagoBRL:parseFloat(f.totalPagoBRL)||0,totalAPagarBRL:parseFloat(f.totalAPagarBRL)||0});onClose();}}
+            style={{background:valid?C.orange:"#ccc",border:"none",borderRadius:10,padding:"10px 28px",fontSize:14,fontWeight:700,color:C.white,cursor:valid?"pointer":"not-allowed",fontFamily:"Calibri,sans-serif"}}>
+            Salvar Pedido
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>;
+}
+
+// ── MODAL DETALHE (com botão editar) ──────────────────────────────────
+function ModalDetalhe({p, onClose, onEdit}){
+  const [tab,setTab]=useState("mercadoria");
+  if(!p)return null;
+  const sc=p.statusFin?STATUS_CFG[p.statusFin]:null;
+  const dias=diasAte(p.vencimento);
+  return <div onClick={onClose} style={{position:"fixed",inset:0,background:"rgba(0,0,0,0.55)",backdropFilter:"blur(6px)",zIndex:200,display:"flex",alignItems:"center",justifyContent:"center",padding:20}}>
+    <div onClick={e=>e.stopPropagation()} style={{background:C.white,border:`1px solid ${C.border}`,borderRadius:20,width:"100%",maxWidth:700,maxHeight:"92vh",overflowY:"auto",boxShadow:"0 25px 60px rgba(0,0,0,0.2)",animation:"modalIn .25s cubic-bezier(.16,1,.3,1)"}}>
+      {/* Header */}
+      <div style={{padding:"20px 24px 14px",borderBottom:`1px solid ${C.border}`,display:"flex",justifyContent:"space-between",alignItems:"flex-start",background:C.dark,borderRadius:"20px 20px 0 0"}}>
+        <div>
+          <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:5,flexWrap:"wrap"}}>
+            <span style={{fontFamily:"Calibri,sans-serif",fontWeight:700,fontSize:21,color:p.highlight?C.orange:C.white}}>{p.processo}</span>
+            {p.processoWezan&&<span style={{background:"rgba(245,130,10,0.2)",color:C.orange,borderRadius:20,padding:"3px 11px",fontSize:11,fontWeight:700,border:`1px solid ${C.orange}44`}}>{p.processoWezan}</span>}
+            {sc&&<span style={{background:sc.bg,color:sc.text,border:`1px solid ${sc.border}`,borderRadius:20,padding:"3px 11px",fontSize:11,fontWeight:700}}>{sc.icon} {sc.label}</span>}
+          </div>
+          <div style={{fontSize:13,color:C.gray,fontFamily:"Calibri,sans-serif"}}>{p.descricao}</div>
+        </div>
+        {/* Botões header */}
+        <div style={{display:"flex",gap:8,alignItems:"center",flexShrink:0}}>
+          <button className="btn-edit" onClick={()=>onEdit(p)}>✏️ Editar</button>
+          <button onClick={onClose} style={{background:"rgba(255,255,255,0.08)",border:"1px solid rgba(255,255,255,0.12)",borderRadius:8,color:C.grayL,width:32,height:32,cursor:"pointer",fontSize:14}}>✕</button>
+        </div>
+      </div>
+      {/* Quick info */}
+      <div style={{display:"grid",gridTemplateColumns:"repeat(3,1fr)",borderBottom:`1px solid ${C.border}`}}>
+        {[["Embarque",p.embarque||"—"],["Previsão Chegada",p.chegadaPrev||"—"],["Containers",(p.containers||"—")+" CTN"],["Número BL",p.numeroBL||"—"],["Agente",<Pill label={p.agente} map={AGENTE_C}/>],["Fornecedor",<Pill label={p.fornecedor} map={FORNEC_C}/>]].map(([l,v],i)=>(
+          <div key={i} style={{padding:"12px 18px",borderRight:i%3!==2?`1px solid ${C.border}`:"none",borderBottom:i<3?`1px solid ${C.border}`:"none",background:i%2===0?C.grayBg:C.white}}>
+            <div style={{fontSize:10,color:C.gray,textTransform:"uppercase",letterSpacing:"0.08em",marginBottom:4,fontWeight:700}}>{l}</div>
+            <div style={{fontSize:14,color:C.black,fontWeight:600,fontFamily:"Calibri,sans-serif"}}>{v}</div>
+          </div>
+        ))}
+      </div>
+      <div style={{display:"flex",gap:16,padding:"11px 22px",borderBottom:`1px solid ${C.border}`,background:C.grayBg,flexWrap:"wrap"}}>
+        <div><div style={{fontSize:10,color:C.gray,textTransform:"uppercase",letterSpacing:"0.08em",marginBottom:4,fontWeight:700}}>Importador</div><Pill label={p.importador} map={IMPORT_C}/></div>
+        {p.vencimento&&<div><div style={{fontSize:10,color:C.gray,textTransform:"uppercase",letterSpacing:"0.08em",marginBottom:4,fontWeight:700}}>Vencimento</div><div style={{fontSize:13,color:dias!==null&&dias<=7?C.red:C.black,fontWeight:700,fontFamily:"Calibri,sans-serif"}}>{p.vencimento}{dias!==null?` (${dias>=0?dias+"d":"vencido"})`:""}</div></div>}
+      </div>
+      {/* Tabs */}
+      <div style={{display:"flex",borderBottom:`1px solid ${C.border}`,padding:"0 22px",background:C.white}}>
+        {[["mercadoria","📦 Mercadoria"],["financeiro","💳 Financeiro"]].map(([k,l])=>(
+          <button key={k} onClick={()=>setTab(k)} style={{background:"none",border:"none",borderBottom:tab===k?`2px solid ${C.orange}`:"2px solid transparent",color:tab===k?C.orange:C.gray,cursor:"pointer",fontSize:14,fontWeight:700,padding:"12px 18px",fontFamily:"Calibri,sans-serif",transition:"all .15s"}}>{l}</button>
+        ))}
+      </div>
+      <div style={{padding:22,background:C.white,borderRadius:"0 0 20px 20px"}}>
+        {tab==="mercadoria"&&(
+          <div>
+            <div style={{background:C.orangeBg,border:`1px solid ${C.orangeBorder}`,borderRadius:12,padding:"14px 18px",marginBottom:18}}>
+              <div style={{fontSize:10,color:C.orangeD,textTransform:"uppercase",letterSpacing:"0.1em",marginBottom:7,fontWeight:700}}>Descrição da Mercadoria</div>
+              <div style={{fontSize:15,color:C.black,lineHeight:1.7,fontFamily:"Calibri,sans-serif"}}>{p.descricao}</div>
+            </div>
+            <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:10}}>
+              {[["Processo",p.processo],["Processo Wezan",p.processoWezan||"—"],["Número BL",p.numeroBL||"—"],["Containers",`${p.containers||"—"} container${p.containers>1?"s":""}`],["Data Embarque",p.embarque||"—"],["Previsão Chegada",p.chegadaPrev||"—"],["Agente",p.agente||"—"],["Fornecedor",p.fornecedor]].map(([l,v])=>(
+                <div key={l} style={{background:C.grayBg,border:`1px solid ${C.border}`,borderRadius:8,padding:"11px 14px"}}>
+                  <div style={{fontSize:10,color:C.gray,textTransform:"uppercase",letterSpacing:"0.07em",marginBottom:4,fontWeight:700}}>{l}</div>
+                  <div style={{fontSize:13,color:C.dark,fontWeight:600,fontFamily:"Calibri,sans-serif"}}>{v}</div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+        {tab==="financeiro"&&(
+          <div>
+            <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:12,marginBottom:14}}>
+              <div style={{background:C.greenBg,border:"1px solid #BBF7D0",borderRadius:10,padding:"14px 18px"}}>
+                <div style={{fontSize:11,color:C.green,textTransform:"uppercase",letterSpacing:"0.07em",marginBottom:5,fontWeight:700}}>Total Pago</div>
+                <div style={{fontSize:20,color:C.green,fontWeight:800,fontFamily:"Calibri,sans-serif"}}>{BRL(p.totalPagoBRL)}</div>
+              </div>
+              <div style={{background:C.redBg,border:"1px solid #FECACA",borderRadius:10,padding:"14px 18px"}}>
+                <div style={{fontSize:11,color:C.red,textTransform:"uppercase",letterSpacing:"0.07em",marginBottom:5,fontWeight:700}}>Total a Pagar</div>
+                <div style={{fontSize:20,color:C.red,fontWeight:800,fontFamily:"Calibri,sans-serif"}}>{BRL(p.totalAPagarBRL)}</div>
+              </div>
+            </div>
+            {sc&&<div style={{background:sc.bg,border:`1px solid ${sc.border}`,borderRadius:10,padding:"11px 16px",display:"flex",alignItems:"center",gap:10}}>
+              <span style={{fontSize:18}}>{sc.icon}</span>
+              <div>
+                <div style={{fontSize:13,color:sc.text,fontWeight:700,fontFamily:"Calibri,sans-serif"}}>Status: {sc.label}</div>
+                <div style={{fontSize:12,color:C.gray,fontFamily:"Calibri,sans-serif"}}>
+                  {p.statusFin==="atracado"&&"Pagamentos concluídos — processo encerrado."}
+                  {p.statusFin==="na_agua"&&"Saldo quitado — mercadoria em trânsito marítimo."}
+                  {p.statusFin==="em_producao"&&"Entrada paga — mercadoria em produção no fornecedor."}
+                </div>
+              </div>
+            </div>}
+          </div>
+        )}
+      </div>
+    </div>
+  </div>;
+}
+
+// ── DASHBOARD ─────────────────────────────────────────────────────────
+function PageDashboard({processos,setSelected}){
+  const [search,setSearch]=useState("");
+  const [fProduto,setFProduto]=useState("Todos");
+  const [fAgente,setFAgente]=useState("Todos");
+  const [sortCol,setSortCol]=useState(null);
+  const [sortDir,setSortDir]=useState("asc");
+  const agentes=["Todos","ALLOG","A1","SMX","CONSHIP"];
+  const produtos=["Todos","CAD","TAP","FIT","MOP"];
+
+  const today = new Date(); today.setHours(0,0,0,0);
+
+  // Filtra processos: oculta chegadas há mais de 15 dias
+  const rows=useMemo(()=>{
+    let d=processos.filter(p=>{
+      const dt=parseDate(p.chegadaPrev);
+      if(!dt) return true; // sem data → mostra sempre
+      const diff=Math.round((dt-today)/86400000);
+      return diff>=-15; // oculta se chegou há mais de 15 dias
+    });
+    if(search){const q=search.toLowerCase();d=d.filter(p=>Object.values(p).some(v=>String(v).toLowerCase().includes(q)));}
+    else d=[...d];
+    if(fProduto!=="Todos")d=d.filter(p=>p.processo.toUpperCase().startsWith(fProduto));
+    if(fAgente!=="Todos")d=d.filter(p=>p.agente===fAgente);
+    if(sortCol)d=[...d].sort((a,b)=>sortDir==="asc"?String(a[sortCol]??"").localeCompare(String(b[sortCol]??""),"pt-BR"):String(b[sortCol]??"").localeCompare(String(a[sortCol]??""),"pt-BR"));
+    return d;
+  },[processos,search,fProduto,fAgente,sortCol,sortDir,today]);
+
+  const ts=col=>{if(sortCol===col)setSortDir(d=>d==="asc"?"desc":"asc");else{setSortCol(col);setSortDir("asc");}};
+
+  // Próximas chegadas: processos com data futura, ordenados por data, top 4
+  const proximasChegadas = useMemo(()=>{
+    return processos
+      .filter(p=>{ const dt=parseDate(p.chegadaPrev); return dt&&dt>=today; })
+      .sort((a,b)=>{ const da=parseDate(a.chegadaPrev),db=parseDate(b.chegadaPrev); return da-db; })
+      .slice(0,4);
+  },[processos,today]);
+
+  const COLS=[{k:"processo",l:"Processo"},{k:"chegadaPrev",l:"Prev. Chegada"},{k:"embarque",l:"Embarque"},{k:"containers",l:"CTN"},{k:"descricao",l:"Descrição"},{k:"fornecedor",l:"Fornecedor"},{k:"agente",l:"Agente"},{k:"importador",l:"Importador"},{k:"statusFin",l:"Status"}];
+  const th={padding:"10px 14px",fontSize:11,fontWeight:700,textTransform:"uppercase",letterSpacing:"0.06em",textAlign:"left",whiteSpace:"nowrap",borderBottom:`1px solid ${C.dark3}`,cursor:"pointer",userSelect:"none",fontFamily:"Calibri,sans-serif"};
+
+  return <div>
+    {/* Header */}
+    <div style={{padding:"22px 28px 0",display:"flex",alignItems:"center",justifyContent:"space-between",flexWrap:"wrap",gap:12}}>
+      <div><div style={{fontFamily:"Calibri,sans-serif",fontWeight:700,fontSize:22,color:C.black}}>Processos de Importação</div><div style={{fontSize:13,color:C.gray,marginTop:2}}>Visão geral de todos os embarques ativos</div></div>
+      <input value={search} onChange={e=>setSearch(e.target.value)} placeholder="Buscar processo, fornecedor, BL..." style={{background:C.white,border:`1px solid ${C.border}`,borderRadius:10,padding:"9px 16px",color:C.black,fontSize:14,width:290,fontFamily:"Calibri,sans-serif",outline:"none"}}/>
+    </div>
+
+    {/* Cards: próximas chegadas */}
+    {proximasChegadas.length>0 && <div style={{padding:"18px 28px 0"}}>
+      <div style={{fontSize:11,color:C.gray,fontWeight:700,textTransform:"uppercase",letterSpacing:"0.08em",marginBottom:10,fontFamily:"Calibri,sans-serif"}}>🚢 Próximas Chegadas</div>
+      <div style={{display:"grid",gridTemplateColumns:"repeat(4,1fr)",gap:12}}>
+        {proximasChegadas.map(p=>{
+          const dias=diasAte(p.chegadaPrev);
+          const urgente=dias!==null&&dias<=20;
+          const sc=p.statusFin?STATUS_CFG[p.statusFin]:null;
+          return <div key={p.id} onClick={()=>setSelected(p)} style={{background:urgente?"#FFFBEB":C.white,border:`1.5px solid ${urgente?"#FDE68A":C.border}`,borderRadius:13,padding:"14px 16px",cursor:"pointer",transition:"all .18s",borderTop:`3px solid ${urgente?"#F59E0B":C.orange}`}} className="pedido-card">
+            <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start",marginBottom:8}}>
+              <span style={{fontFamily:"Calibri,sans-serif",fontWeight:700,fontSize:15,color:urgente?"#B45309":C.orange}}>{p.processo}</span>
+              {sc&&<StatusBadge s={p.statusFin}/>}
+            </div>
+            <div style={{fontSize:12,color:C.gray,fontFamily:"Calibri,sans-serif",marginBottom:10,lineHeight:1.4,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{p.descricao}</div>
+            <div style={{display:"flex",justifyContent:"space-between",alignItems:"center"}}>
+              <div>
+                <div style={{fontSize:10,color:C.gray,textTransform:"uppercase",letterSpacing:"0.07em",fontFamily:"Calibri,sans-serif",marginBottom:2}}>Previsão</div>
+                <div style={{fontSize:13,color:C.dark,fontWeight:700,fontFamily:"Calibri,sans-serif"}}>{p.chegadaPrev}</div>
+              </div>
+              <div style={{textAlign:"right"}}>
+                <div style={{fontSize:10,color:C.gray,textTransform:"uppercase",letterSpacing:"0.07em",fontFamily:"Calibri,sans-serif",marginBottom:2}}>Faltam</div>
+                <div style={{fontSize:18,fontWeight:800,color:urgente?"#D97706":C.orange,fontFamily:"Calibri,sans-serif",lineHeight:1}}>
+                  {dias!==null?(dias===0?"Hoje":dias>0?`${dias}d`:"Atrasado"):"—"}
+                </div>
+              </div>
+            </div>
+          </div>;
+        })}
+      </div>
+    </div>}
+
+    {/* Filtros */}
+    <div style={{padding:"14px 28px 0",display:"flex",gap:18,flexWrap:"wrap",alignItems:"center"}}>
+      <div style={{display:"flex",gap:5,alignItems:"center"}}>
+        <span style={{fontSize:11,color:C.gray,textTransform:"uppercase",letterSpacing:"0.07em",marginRight:3,fontWeight:700}}>Produto:</span>
+        {produtos.map(p=><button key={p} className={`fb${fProduto===p?" on":""}`} onClick={()=>setFProduto(p)}>{p}</button>)}
+      </div>
+      <div style={{display:"flex",gap:5,alignItems:"center"}}>
+        <span style={{fontSize:11,color:C.gray,textTransform:"uppercase",letterSpacing:"0.07em",marginRight:3,fontWeight:700}}>Agente:</span>
+        {agentes.map(a=><button key={a} className={`fb${fAgente===a?" on":""}`} onClick={()=>setFAgente(a)}>{a}</button>)}
+      </div>
+    </div>
+
+    {/* Tabela */}
+    <div style={{margin:"13px 28px 0",borderRadius:13,border:`1px solid ${C.border}`,overflow:"hidden",background:C.white,boxShadow:"0 1px 4px rgba(0,0,0,0.06)"}}>
+      <div style={{overflowX:"auto"}}>
+        <table style={{width:"100%",borderCollapse:"collapse"}}>
+          <thead><tr style={{background:C.dark}}>{COLS.map(c=><th key={c.k} onClick={()=>ts(c.k)} style={{...th,color:sortCol===c.k?C.orange:C.grayL}}>{c.l}{sortCol===c.k?(sortDir==="asc"?" ↑":" ↓"):""}</th>)}</tr></thead>
+          <tbody>{rows.map((p,i)=>{
+            const diasChegada=diasAte(p.chegadaPrev);
+            const chegandoBreve=diasChegada!==null&&diasChegada>=0&&diasChegada<=20;
+            const rowBg=chegandoBreve?"#FFFDE7":p.highlight?C.orangeBg:i%2===0?C.white:C.grayBg;
+            return <tr key={p.id} className="dr" onClick={()=>setSelected(p)} style={{background:rowBg,animation:`rowIn .24s ${i*16}ms both`,borderLeft:chegandoBreve?`3px solid #F59E0B`:p.highlight?`3px solid ${C.orange}`:"3px solid transparent"}}>
+              <td style={{padding:"10px 14px",borderBottom:`1px solid ${C.border}`}}>
+                <span style={{fontWeight:700,fontSize:14,color:p.highlight?C.orange:C.dark,fontFamily:"Calibri,sans-serif"}}>{p.processo}</span>
+              </td>
+              <td style={{padding:"10px 14px",borderBottom:`1px solid ${C.border}`,whiteSpace:"nowrap",fontFamily:"Calibri,sans-serif"}}>
+                <div style={{display:"flex",alignItems:"center",gap:6}}>
+                  <span style={{fontSize:14,color:chegandoBreve?"#92400E":C.dark,fontWeight:chegandoBreve?700:400}}>{p.chegadaPrev||"—"}</span>
+                  {chegandoBreve&&diasChegada!==null&&<span style={{background:"#FEF3C7",color:"#92400E",border:"1px solid #FDE68A",borderRadius:20,padding:"1px 7px",fontSize:11,fontWeight:700,whiteSpace:"nowrap"}}>⚡ {diasChegada===0?"Hoje":`${diasChegada}d`}</span>}
+                </div>
+              </td>
+              <td style={{padding:"10px 14px",borderBottom:`1px solid ${C.border}`,fontSize:14,color:C.gray,whiteSpace:"nowrap",fontFamily:"Calibri,sans-serif"}}>{p.embarque||"—"}</td>
+              <td style={{padding:"10px 14px",borderBottom:`1px solid ${C.border}`,textAlign:"center"}}><span style={{background:"#E0F2FE",color:"#0369A1",borderRadius:6,padding:"2px 8px",fontSize:12,fontWeight:700}}>{p.containers}</span></td>
+              <td style={{padding:"10px 14px",borderBottom:`1px solid ${C.border}`,maxWidth:210,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap",fontSize:13,color:C.gray,fontFamily:"Calibri,sans-serif"}}>{p.descricao}</td>
+              <td style={{padding:"10px 14px",borderBottom:`1px solid ${C.border}`}}><Pill label={p.fornecedor} map={FORNEC_C}/></td>
+              <td style={{padding:"10px 14px",borderBottom:`1px solid ${C.border}`}}><Pill label={p.agente} map={AGENTE_C}/></td>
+              <td style={{padding:"10px 14px",borderBottom:`1px solid ${C.border}`}}><Pill label={p.importador} map={IMPORT_C}/></td>
+              <td style={{padding:"10px 14px",borderBottom:`1px solid ${C.border}`}}><StatusBadge s={p.statusFin}/></td>
+            </tr>;
+          })}</tbody>
+        </table>
+      </div>
+      <div style={{padding:"8px 16px",borderTop:`1px solid ${C.border}`,fontSize:12,color:C.gray,background:C.grayBg,fontFamily:"Calibri,sans-serif"}}>
+        {rows.length} processo{rows.length!==1?"s":""} exibido{rows.length!==1?"s":""}
+        <span style={{marginLeft:12,color:"#B45309"}}>• Processos com chegada há mais de 15 dias ocultados automaticamente</span>
+      </div>
+    </div>
+  </div>;
+}
+
+// ── PEDIDOS — CARDS POR CATEGORIA ─────────────────────────────────────
+function PagePedidos({processos, onAddPedido, setSelected}){
+  const [showNovo, setShowNovo] = useState(false);
+  const [search, setSearch]    = useState("");
+
+  const filtered = useMemo(()=>{
+    if(!search) return processos;
+    const q=search.toLowerCase();
+    return processos.filter(p=>Object.values(p).some(v=>String(v).toLowerCase().includes(q)));
+  },[processos,search]);
+
+  return <div style={{paddingBottom:40}}>
+    {/* Cabeçalho */}
+    <div style={{padding:"22px 28px 0",display:"flex",alignItems:"center",justifyContent:"space-between",flexWrap:"wrap",gap:12}}>
+      <div>
+        <div style={{fontFamily:"Calibri,sans-serif",fontWeight:700,fontSize:22,color:C.black}}>Pedidos</div>
+        <div style={{fontSize:13,color:C.gray,marginTop:2}}>Pedidos organizados por tipo de produto</div>
+      </div>
+      <div style={{display:"flex",gap:10,alignItems:"center",flexWrap:"wrap"}}>
+        <input value={search} onChange={e=>setSearch(e.target.value)} placeholder="Buscar pedido..." style={{background:C.white,border:`1px solid ${C.border}`,borderRadius:10,padding:"9px 16px",color:C.black,fontSize:14,width:240,fontFamily:"Calibri,sans-serif",outline:"none"}}/>
+        <button onClick={()=>setShowNovo(true)} className="btn-orange">➕ Criar Novo Pedido</button>
+      </div>
+    </div>
+
+    {/* Seções por categoria */}
+    {CATEGORIAS.map(cat=>{
+      const pedidos = filtered.filter(p=>p.processo.toUpperCase().startsWith(cat.key));
+      if(pedidos.length===0) return null;
+      return <div key={cat.key} style={{padding:"24px 28px 0"}}>
+        {/* Header da categoria */}
+        <div className="cat-header" style={{borderColor:cat.cor}}>
+          <div style={{width:38,height:38,background:cat.cor,borderRadius:10,display:"flex",alignItems:"center",justifyContent:"center",fontSize:20,flexShrink:0}}>{cat.icon}</div>
+          <div style={{flex:1}}>
+            <div style={{fontFamily:"Calibri,sans-serif",fontWeight:700,fontSize:18,color:cat.cor}}>{cat.label}</div>
+            <div style={{fontSize:12,color:C.gray,fontFamily:"Calibri,sans-serif"}}>{pedidos.length} pedido{pedidos.length!==1?"s":""} · {pedidos.reduce((s,p)=>s+(p.containers||0),0)} containers</div>
+          </div>
+          <div style={{textAlign:"right"}}>
+            <div style={{fontSize:11,color:C.gray,textTransform:"uppercase",letterSpacing:"0.07em",fontFamily:"Calibri,sans-serif",marginBottom:2}}>Total a Pagar</div>
+            <div style={{fontSize:16,fontWeight:800,color:cat.cor,fontFamily:"Calibri,sans-serif"}}>{BRL(pedidos.reduce((s,p)=>s+(p.totalAPagarBRL||0),0))}</div>
+          </div>
+        </div>
+
+        {/* Grid de cards */}
+        <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(280px,1fr))",gap:14}}>
+          {pedidos.map((p,i)=>{
+            const sc=p.statusFin?STATUS_CFG[p.statusFin]:null;
+            const dias=diasAte(p.vencimento);
+            const vAlerta=dias!==null&&dias<=7;
+            return <div key={p.id} className="pedido-card" onClick={()=>setSelected(p)} style={{animationDelay:`${i*50}ms`,borderLeft:`4px solid ${cat.cor}`}}>
+              {/* Card header */}
+              <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start",marginBottom:10}}>
+                <div>
+                  <div style={{fontFamily:"Calibri,sans-serif",fontWeight:700,fontSize:16,color:cat.cor}}>{p.processo}</div>
+                  {p.processoWezan&&<div style={{fontSize:11,color:C.gray,fontFamily:"Calibri,sans-serif",marginTop:1}}>{p.processoWezan}</div>}
+                </div>
+                {sc&&<StatusBadge s={p.statusFin}/>}
+              </div>
+              {/* Descrição */}
+              <div style={{fontSize:13,color:C.dark,fontFamily:"Calibri,sans-serif",marginBottom:12,lineHeight:1.4,fontWeight:500}}>{p.descricao}</div>
+              {/* Info grid */}
+              <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:8,marginBottom:12}}>
+                {[["📅 Embarque",p.embarque||"—"],["🚢 Prev. Chegada",p.chegadaPrev||"—"],["📦 Containers",p.containers+" CTN"],["🏭 Fornecedor",p.fornecedor]].map(([l,v])=>(
+                  <div key={l} style={{background:cat.corBg,border:`1px solid ${cat.corBorder}`,borderRadius:8,padding:"7px 10px"}}>
+                    <div style={{fontSize:10,color:cat.cor,fontWeight:700,fontFamily:"Calibri,sans-serif",marginBottom:2}}>{l}</div>
+                    <div style={{fontSize:12,color:C.dark,fontWeight:600,fontFamily:"Calibri,sans-serif"}}>{v}</div>
+                  </div>
+                ))}
+              </div>
+              {/* Financeiro */}
+              {(p.totalPagoBRL>0||p.totalAPagarBRL>0)&&<div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:8,marginBottom:10}}>
+                <div style={{background:C.greenBg,border:"1px solid #BBF7D0",borderRadius:8,padding:"7px 10px"}}>
+                  <div style={{fontSize:10,color:C.green,fontWeight:700,fontFamily:"Calibri,sans-serif",marginBottom:2}}>✅ Pago</div>
+                  <div style={{fontSize:12,color:C.green,fontWeight:800,fontFamily:"Calibri,sans-serif"}}>{BRL(p.totalPagoBRL)}</div>
+                </div>
+                <div style={{background:p.totalAPagarBRL>0?C.redBg:C.grayBg,border:`1px solid ${p.totalAPagarBRL>0?"#FECACA":C.border}`,borderRadius:8,padding:"7px 10px"}}>
+                  <div style={{fontSize:10,color:p.totalAPagarBRL>0?C.red:C.gray,fontWeight:700,fontFamily:"Calibri,sans-serif",marginBottom:2}}>🔴 A Pagar</div>
+                  <div style={{fontSize:12,color:p.totalAPagarBRL>0?C.red:C.grayL,fontWeight:800,fontFamily:"Calibri,sans-serif"}}>{BRL(p.totalAPagarBRL)}</div>
+                </div>
+              </div>}
+              {/* Vencimento alerta */}
+              {p.vencimento&&<div style={{background:vAlerta?C.redBg:C.grayBg,border:`1px solid ${vAlerta?"#FECACA":C.border}`,borderRadius:7,padding:"6px 10px",display:"flex",alignItems:"center",gap:6}}>
+                <span style={{fontSize:12}}>{vAlerta?"⚡":"📆"}</span>
+                <span style={{fontSize:12,color:vAlerta?C.red:C.gray,fontWeight:vAlerta?700:400,fontFamily:"Calibri,sans-serif"}}>Vence {p.vencimento}{dias!==null?` (${dias>=0?dias+"d":"vencido"})`:""}</span>
+              </div>}
+              {/* Agente + Importador */}
+              <div style={{display:"flex",gap:6,marginTop:10,flexWrap:"wrap"}}>
+                <Pill label={p.agente} map={AGENTE_C}/>
+                <Pill label={p.importador} map={IMPORT_C}/>
+              </div>
+            </div>;
+          })}
+        </div>
+      </div>;
+    })}
+
+    {filtered.length===0&&<div style={{textAlign:"center",padding:"60px 20px",color:C.gray,fontFamily:"Calibri,sans-serif"}}>
+      <div style={{fontSize:40,marginBottom:12}}>🔍</div>
+      <div style={{fontSize:16,fontWeight:600}}>Nenhum pedido encontrado</div>
+      <div style={{fontSize:13,marginTop:4}}>Tente outro termo de busca</div>
+    </div>}
+
+    {showNovo&&<ModalNovoPedido onSave={onAddPedido} onClose={()=>setShowNovo(false)}/>}
+  </div>;
+}
+
+// ── FINANCEIRO ────────────────────────────────────────────────────────
+function PageFinanceiro({processos}){
+  const [filtro,setFiltro]=useState("todos");
+  const comFin=useMemo(()=>processos.filter(p=>p.statusFin&&p.statusFin!=="atracado"),[processos]);
+  const rows=useMemo(()=>filtro==="todos"?comFin:comFin.filter(r=>r.statusFin===filtro),[comFin,filtro]);
+  const pendentes=processos.filter(p=>p.totalAPagarBRL>0);
+  const ap7=pendentes.filter(p=>{const d=diasAte(p.vencimento);return d!==null&&d>=0&&d<=7;});
+  const ap15=pendentes.filter(p=>{const d=diasAte(p.vencimento);return d!==null&&d>7&&d<=15;});
+  const ap30=pendentes.filter(p=>{const d=diasAte(p.vencimento);return d!==null&&d>15&&d<=30;});
+  const ap30p=pendentes.filter(p=>{const d=diasAte(p.vencimento);return d===null||d>30;});
+  const sum=arr=>arr.reduce((s,p)=>s+(p.totalAPagarBRL||0),0);
+  const totalAPagar=sum(pendentes);
+  const countS=s=>comFin.filter(r=>r.statusFin===s).length;
+  const FILTROS=[{k:"todos",l:"Todos",i:"📋"},{k:"na_agua",l:"Na Água",i:"🚢"},{k:"em_producao",l:"Em Produção",i:"🏭"}];
+  const COLS=["Processo","Prev. Chegada","Embarque","CTN","Descrição","Fornecedor","Importador","Vencimento","Total Pago","Total a Pagar","Status"];
+  const th={padding:"10px 14px",fontSize:11,fontWeight:700,color:C.grayL,textTransform:"uppercase",letterSpacing:"0.06em",textAlign:"left",whiteSpace:"nowrap",fontFamily:"Calibri,sans-serif",borderBottom:`1px solid ${C.dark3}`};
+
+  const PrazoCard=({label,arr,urg})=>{
+    const val=sum(arr);
+    const U={alta:{bg:C.redBg,border:"#FECACA",text:C.red},media:{bg:C.orangeBg,border:C.orangeBorder,text:C.orangeD},baixa:{bg:C.blueBg,border:"#BFDBFE",text:C.blue},nenhuma:{bg:C.grayBg,border:C.border,text:C.gray}};
+    const u=U[urg];
+    return <div className="prazo-card" style={{background:u.bg,border:`1px solid ${u.border}`}}>
+      <div style={{fontSize:11,color:u.text,textTransform:"uppercase",letterSpacing:"0.07em",fontWeight:700,marginBottom:6,fontFamily:"Calibri,sans-serif"}}>{label}</div>
+      <div style={{fontSize:24,fontWeight:800,color:u.text,fontFamily:"Calibri,sans-serif",lineHeight:1}}>{BRL(val)}</div>
+      <div style={{fontSize:12,color:u.text+"99",marginTop:5,fontFamily:"Calibri,sans-serif"}}>{arr.length} processo{arr.length!==1?"s":""}</div>
+      {arr.length>0&&<div style={{marginTop:8,display:"flex",flexWrap:"wrap",gap:4}}>
+        {arr.slice(0,4).map(p=><span key={p.id} style={{background:u.text+"18",color:u.text,borderRadius:6,padding:"1px 7px",fontSize:11,fontWeight:700}}>{p.processo}</span>)}
+        {arr.length>4&&<span style={{color:u.text+"77",fontSize:11}}>+{arr.length-4}</span>}
+      </div>}
+    </div>;
+  };
+
+  return <div>
+    <div style={{padding:"22px 28px 0"}}><div style={{fontFamily:"Calibri,sans-serif",fontWeight:700,fontSize:22,color:C.black}}>Dashboard Financeiro</div><div style={{fontSize:13,color:C.gray,marginTop:2}}>Fluxo de pagamentos e projeção de vencimentos</div></div>
+    <div style={{margin:"18px 28px 0",background:C.dark,borderRadius:16,padding:"20px 26px",display:"flex",alignItems:"center",justifyContent:"space-between",flexWrap:"wrap",gap:16}}>
+      <div>
+        <div style={{fontSize:11,color:C.gray,textTransform:"uppercase",letterSpacing:"0.08em",fontWeight:700,fontFamily:"Calibri,sans-serif",marginBottom:6}}>🔴 Total Geral a Pagar</div>
+        <div style={{fontSize:36,fontWeight:800,color:C.orange,fontFamily:"Calibri,sans-serif",lineHeight:1}}>{BRL(totalAPagar)}</div>
+        <div style={{fontSize:13,color:C.gray,marginTop:6,fontFamily:"Calibri,sans-serif"}}>{pendentes.length} processos com saldo pendente</div>
+      </div>
+      <div>
+        <div style={{fontSize:11,color:C.gray,textTransform:"uppercase",letterSpacing:"0.08em",fontWeight:700,fontFamily:"Calibri,sans-serif",marginBottom:6}}>Distribuição por prazo</div>
+        {[{l:"Próx. 7 dias",v:sum(ap7),c:C.red},{l:"8–15 dias",v:sum(ap15),c:C.orange},{l:"16–30 dias",v:sum(ap30),c:C.blue},{l:"+30 dias / s/data",v:sum(ap30p),c:C.gray}].map(x=>(
+          <div key={x.l} style={{display:"flex",justifyContent:"space-between",gap:24,marginBottom:3}}>
+            <span style={{fontSize:12,color:x.c,fontFamily:"Calibri,sans-serif"}}>{x.l}</span>
+            <span style={{fontSize:12,color:x.c,fontWeight:700,fontFamily:"Calibri,sans-serif"}}>{BRL(x.v)}</span>
+          </div>
+        ))}
+      </div>
+    </div>
+    <div style={{display:"grid",gridTemplateColumns:"repeat(4,1fr)",gap:12,padding:"14px 28px 0"}}>
+      <PrazoCard label="⚡ A Pagar — Próx. 7 dias" arr={ap7} urg="alta"/>
+      <PrazoCard label="🔶 A Pagar — 8 a 15 dias" arr={ap15} urg="media"/>
+      <PrazoCard label="🔵 A Pagar — 16 a 30 dias" arr={ap30} urg="baixa"/>
+      <PrazoCard label="⬜ A Pagar — +30 dias / s/data" arr={ap30p} urg="nenhuma"/>
+    </div>
+    <div style={{display:"grid",gridTemplateColumns:"repeat(2,1fr)",gap:11,padding:"14px 28px 0"}}>
+      {["na_agua","em_producao"].map(s=>{
+        const sc=STATUS_CFG[s],cnt=countS(s),val=comFin.filter(r=>r.statusFin===s).reduce((a,r)=>a+(r.totalPagoBRL||0),0);
+        return <div key={s} onClick={()=>setFiltro(filtro===s?"todos":s)} style={{background:sc.bg,border:`2px solid ${filtro===s?sc.dot:sc.border}`,borderRadius:11,padding:"12px 16px",display:"flex",alignItems:"center",gap:12,cursor:"pointer",transition:"border .15s"}}>
+          <span style={{fontSize:22}}>{sc.icon}</span>
+          <div style={{flex:1}}><div style={{fontSize:13,color:sc.text,fontWeight:700,fontFamily:"Calibri,sans-serif"}}>{sc.label}</div><div style={{fontSize:12,color:sc.text+"88",fontFamily:"Calibri,sans-serif"}}>{cnt} processo{cnt!==1?"s":""}</div></div>
+          <div style={{textAlign:"right"}}><div style={{fontSize:13,color:sc.text,fontWeight:700,fontFamily:"Calibri,sans-serif"}}>{BRL(val)}</div><div style={{fontSize:11,color:sc.text+"77",fontFamily:"Calibri,sans-serif"}}>pago</div></div>
+        </div>;
+      })}
+    </div>
+    <div style={{padding:"13px 28px 0",display:"flex",gap:7,alignItems:"center",flexWrap:"wrap"}}>
+      <span style={{fontSize:11,color:C.gray,fontWeight:700,textTransform:"uppercase",letterSpacing:"0.07em",marginRight:4,fontFamily:"Calibri,sans-serif"}}>Filtrar:</span>
+      {FILTROS.map(f=><button key={f.k} onClick={()=>setFiltro(f.k)} style={{background:filtro===f.k?C.orange:C.white,border:`1px solid ${filtro===f.k?C.orange:C.border}`,borderRadius:8,color:filtro===f.k?C.white:C.gray,cursor:"pointer",fontSize:13,padding:"6px 14px",fontFamily:"Calibri,sans-serif",fontWeight:600,transition:"all .15s"}}>{f.i} {f.l}</button>)}
+    </div>
+    <div style={{margin:"13px 28px 0",borderRadius:13,border:`1px solid ${C.border}`,overflow:"hidden",background:C.white,boxShadow:"0 1px 4px rgba(0,0,0,0.06)"}}>
+      <div style={{overflowX:"auto"}}>
+        <table style={{width:"100%",borderCollapse:"collapse"}}>
+          <thead><tr style={{background:C.dark}}>{COLS.map(h=><th key={h} style={th}>{h}</th>)}</tr></thead>
+          <tbody>{rows.map((r,i)=>{
+            const sc=STATUS_CFG[r.statusFin];
+            const dias=diasAte(r.vencimento);
+            const vA=dias!==null&&dias<=7;
+            return <tr key={r.id} style={{background:i%2===0?C.white:C.grayBg}}>
+              <td style={{padding:"10px 14px",borderBottom:`1px solid ${C.border}`,fontFamily:"Calibri,sans-serif",fontWeight:700,color:C.orange,fontSize:13}}>{r.processo}</td>
+              <td style={{padding:"10px 14px",borderBottom:`1px solid ${C.border}`,fontSize:13,color:C.dark,whiteSpace:"nowrap",fontFamily:"Calibri,sans-serif"}}>{r.chegadaPrev||"—"}</td>
+              <td style={{padding:"10px 14px",borderBottom:`1px solid ${C.border}`,fontSize:13,color:C.gray,whiteSpace:"nowrap",fontFamily:"Calibri,sans-serif"}}>{r.embarque||"—"}</td>
+              <td style={{padding:"10px 14px",borderBottom:`1px solid ${C.border}`,textAlign:"center"}}><span style={{background:"#E0F2FE",color:"#0369A1",borderRadius:6,padding:"2px 8px",fontSize:12,fontWeight:700}}>{r.containers}</span></td>
+              <td style={{padding:"10px 14px",borderBottom:`1px solid ${C.border}`,fontSize:13,color:C.gray,maxWidth:190,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap",fontFamily:"Calibri,sans-serif"}}>{r.descricao}</td>
+              <td style={{padding:"10px 14px",borderBottom:`1px solid ${C.border}`}}><Pill label={r.fornecedor} map={FORNEC_C}/></td>
+              <td style={{padding:"10px 14px",borderBottom:`1px solid ${C.border}`}}><Pill label={r.importador} map={IMPORT_C}/></td>
+              <td style={{padding:"10px 14px",borderBottom:`1px solid ${C.border}`,whiteSpace:"nowrap",fontFamily:"Calibri,sans-serif"}}>
+                {r.vencimento?<span style={{fontSize:13,color:vA?C.red:C.dark,fontWeight:vA?700:400}}>{r.vencimento}{dias!==null?` (${dias>=0?dias+"d":"venc."})`:""}</span>:<span style={{color:C.grayL}}>—</span>}
+              </td>
+              <td style={{padding:"10px 14px",borderBottom:`1px solid ${C.border}`,whiteSpace:"nowrap"}}><span style={{color:C.green,fontWeight:700,fontSize:13,fontFamily:"Calibri,sans-serif"}}>{BRL(r.totalPagoBRL)}</span></td>
+              <td style={{padding:"10px 14px",borderBottom:`1px solid ${C.border}`,whiteSpace:"nowrap"}}><span style={{color:r.totalAPagarBRL>0?C.red:C.grayL,fontWeight:700,fontSize:13,fontFamily:"Calibri,sans-serif"}}>{BRL(r.totalAPagarBRL)}</span></td>
+              <td style={{padding:"10px 14px",borderBottom:`1px solid ${C.border}`}}><StatusBadge s={r.statusFin}/></td>
+            </tr>;
+          })}</tbody>
+          <tfoot><tr style={{background:C.dark2,borderTop:`2px solid ${C.dark3}`}}>
+            <td colSpan={8} style={{padding:"11px 14px",fontFamily:"Calibri,sans-serif",fontWeight:700,fontSize:13,color:C.gray}}>TOTAL ({rows.length} processos)</td>
+            <td style={{padding:"11px 14px",fontFamily:"Calibri,sans-serif",fontWeight:800,fontSize:13,color:C.green,whiteSpace:"nowrap"}}>{BRL(rows.reduce((s,r)=>s+(r.totalPagoBRL||0),0))}</td>
+            <td style={{padding:"11px 14px",fontFamily:"Calibri,sans-serif",fontWeight:800,fontSize:13,color:C.red,whiteSpace:"nowrap"}}>{BRL(rows.reduce((s,r)=>s+(r.totalAPagarBRL||0),0))}</td>
+            <td/>
+          </tr></tfoot>
+        </table>
+      </div>
+    </div>
+  </div>;
+}
+
+// ── USUÁRIOS INICIAIS ─────────────────────────────────────────────────
+const INIT_USERS = [
+  {id:1, nome:"Administrador", email:"polex.com", senha:"12345", perfil:"admin",  ativo:true,  criado:"01/01/2025"},
+  {id:2, nome:"João Silva",    email:"joao@polexfull.com",  senha:"joao123",  perfil:"usuario", ativo:true,  criado:"10/02/2025"},
+];
+
+const PERFIL_CFG = {
+  admin:   {label:"Administrador", bg:"#FFF4E8", text:"#C4640A", border:"#FDDCB4", icon:"👑"},
+  usuario: {label:"Usuário",        bg:"#EFF6FF", text:"#1D4ED8", border:"#BFDBFE", icon:"👤"},
+};
+
+// ── TELA DE LOGIN ─────────────────────────────────────────────────────
+function PageLogin({onLogin}){
+  const { useState: useS, useEffect: useE } = React;
+
+  const getSaved = () => { try{ return JSON.parse(localStorage.getItem("polex_saved_login")||"null"); }catch(e){ return null; } };
+  const getUsers = () => { try{ return JSON.parse(localStorage.getItem("polex_users")||"null")||INIT_USERS; }catch(e){ return INIT_USERS; } };
+
+  const saved = getSaved();
+  const [email,    setEmail]    = useS(saved?.email||"");
+  const [senha,    setSenha]    = useS(saved?.senha||"");
+  const [lembrar,  setLembrar]  = useS(!!saved);
+  const [erro,     setErro]     = useS("");
+  const [loading,  setLoading]  = useS(false);
+  const [showSenha,setShowSenha]= useS(false);
+  const [autoMsg,  setAutoMsg]  = useS("");
+
+  // Login automático se tiver sessão salva
+  useE(()=>{
+    const sessao = localStorage.getItem("polex_session");
+    if(sessao){
+      try{
+        const user = JSON.parse(sessao);
+        const users = getUsers();
+        // Verifica se o usuário ainda existe e está ativo
+        const atual = users.find(u=>u.id===user.id&&u.ativo);
+        if(atual){
+          setAutoMsg("Entrando automaticamente...");
+          setTimeout(()=>onLogin(atual), 800);
+          return;
+        } else {
+          localStorage.removeItem("polex_session");
+        }
+      }catch(e){ localStorage.removeItem("polex_session"); }
+    }
+  },[]);
+
+  const handleLogin = () => {
+    setErro("");
+    if(!email.trim()||!senha.trim()){ setErro("Preencha e-mail e senha."); return; }
+    setLoading(true);
+    setTimeout(()=>{
+      const users = getUsers();
+      const user  = users.find(u=>u.email.toLowerCase()===email.toLowerCase()&&u.senha===senha);
+      if(!user){ setErro("E-mail ou senha incorretos."); setLoading(false); return; }
+      if(!user.ativo){ setErro("Usuário inativo. Contate o administrador."); setLoading(false); return; }
+      // Salvar login se marcado
+      if(lembrar){
+        localStorage.setItem("polex_saved_login", JSON.stringify({email,senha}));
+        localStorage.setItem("polex_session", JSON.stringify(user));
+      } else {
+        localStorage.removeItem("polex_saved_login");
+        localStorage.setItem("polex_session", JSON.stringify(user));
+      }
+      onLogin(user);
+      setLoading(false);
+    }, 600);
+  };
+
+  const inp = {width:"100%",border:`1px solid #333`,borderRadius:10,padding:"12px 16px",fontSize:15,fontFamily:"Calibri,sans-serif",color:C.white,outline:"none",background:"#1E1E1E",transition:"border .15s"};
+
+  // Tela de login automático
+  if(autoMsg) return <div style={{minHeight:"100vh",background:C.black,display:"flex",alignItems:"center",justifyContent:"center",flexDirection:"column",gap:20}}>
+    <div style={{width:64,height:64,background:C.dark,border:`2px solid ${C.orange}`,borderRadius:18,display:"flex",alignItems:"center",justifyContent:"center",fontSize:32,boxShadow:`0 0 30px ${C.orange}33`}}>⚡</div>
+    <div style={{fontFamily:"Calibri,sans-serif",fontWeight:700,fontSize:22,color:C.white}}>Polex <span style={{color:C.orange}}>Full</span></div>
+    <div style={{display:"flex",alignItems:"center",gap:10,color:C.gray,fontSize:14,fontFamily:"Calibri,sans-serif"}}>
+      <div style={{width:18,height:18,border:`2px solid ${C.orange}`,borderTopColor:"transparent",borderRadius:"50%",animation:"spin .7s linear infinite"}}/>
+      {autoMsg}
+    </div>
+    <style>{`@keyframes spin{to{transform:rotate(360deg)}}`}</style>
+  </div>;
+
+  return <div style={{minHeight:"100vh",background:C.black,display:"flex",alignItems:"center",justifyContent:"center",padding:20,position:"relative",overflow:"hidden"}}>
+    <div style={{position:"absolute",inset:0,background:`radial-gradient(ellipse at 20% 50%, rgba(245,130,10,0.12) 0%, transparent 60%), radial-gradient(ellipse at 80% 20%, rgba(245,130,10,0.07) 0%, transparent 50%)`}}/>
+    <div style={{position:"absolute",top:0,left:0,right:0,height:3,background:`linear-gradient(90deg,${C.orange},${C.orangeL},transparent)`}}/>
+
+    <div style={{width:"100%",maxWidth:420,position:"relative",animation:"modalIn .4s ease"}}>
+      {/* Logo */}
+      <div style={{textAlign:"center",marginBottom:36}}>
+        <div style={{width:64,height:64,background:C.dark,border:`2px solid ${C.orange}`,borderRadius:18,display:"inline-flex",alignItems:"center",justifyContent:"center",fontSize:32,marginBottom:16,boxShadow:`0 0 30px ${C.orange}33`}}>⚡</div>
+        <div style={{fontFamily:"Calibri,sans-serif",fontWeight:700,fontSize:28,color:C.white,letterSpacing:"-0.5px"}}>Polex <span style={{color:C.orange}}>Full</span></div>
+        <div style={{fontSize:13,color:C.gray,marginTop:4,letterSpacing:"0.1em",textTransform:"uppercase"}}>Import — Sistema de Gestão</div>
+      </div>
+
+      {/* Card */}
+      <div style={{background:C.dark,border:`1px solid ${C.dark3}`,borderRadius:20,padding:"32px 28px",boxShadow:"0 20px 60px rgba(0,0,0,0.5)"}}>
+        <div style={{fontFamily:"Calibri,sans-serif",fontWeight:700,fontSize:20,color:C.white,marginBottom:6}}>Bem-vindo de volta</div>
+        <div style={{fontSize:13,color:C.gray,marginBottom:28,fontFamily:"Calibri,sans-serif"}}>Faça login para acessar o sistema</div>
+
+        <div style={{display:"flex",flexDirection:"column",gap:16}}>
+          {/* E-mail */}
+          <div>
+            <label style={{fontSize:12,fontWeight:700,color:C.gray,textTransform:"uppercase",letterSpacing:"0.07em",fontFamily:"Calibri,sans-serif",display:"block",marginBottom:6}}>E-mail</label>
+            <input value={email} onChange={e=>setEmail(e.target.value)} onKeyDown={e=>e.key==="Enter"&&handleLogin()} placeholder="seu@email.com" style={inp}/>
+          </div>
+          {/* Senha */}
+          <div>
+            <label style={{fontSize:12,fontWeight:700,color:C.gray,textTransform:"uppercase",letterSpacing:"0.07em",fontFamily:"Calibri,sans-serif",display:"block",marginBottom:6}}>Senha</label>
+            <div style={{position:"relative"}}>
+              <input type={showSenha?"text":"password"} value={senha} onChange={e=>setSenha(e.target.value)} onKeyDown={e=>e.key==="Enter"&&handleLogin()} placeholder="••••••••" style={{...inp,paddingRight:48}}/>
+              <button onClick={()=>setShowSenha(s=>!s)} style={{position:"absolute",right:12,top:"50%",transform:"translateY(-50%)",background:"none",border:"none",cursor:"pointer",color:C.gray,fontSize:16,padding:4}}>{showSenha?"🙈":"👁️"}</button>
+            </div>
+          </div>
+
+          {/* Salvar login */}
+          <label style={{display:"flex",alignItems:"center",gap:10,cursor:"pointer",userSelect:"none"}}>
+            <div onClick={()=>setLembrar(l=>!l)} style={{width:20,height:20,borderRadius:6,border:`2px solid ${lembrar?C.orange:"#444"}`,background:lembrar?C.orange:"transparent",display:"flex",alignItems:"center",justifyContent:"center",transition:"all .15s",flexShrink:0}}>
+              {lembrar && <span style={{color:C.white,fontSize:13,fontWeight:900,lineHeight:1}}>✓</span>}
+            </div>
+            <span style={{fontSize:13,color:C.gray,fontFamily:"Calibri,sans-serif"}}>Salvar login <span style={{color:"#555",fontSize:12}}>(entrar automaticamente)</span></span>
+          </label>
+
+          {erro && <div style={{background:"rgba(229,53,53,0.12)",border:"1px solid rgba(229,53,53,0.3)",borderRadius:8,padding:"10px 14px",fontSize:13,color:C.red,fontFamily:"Calibri,sans-serif",display:"flex",alignItems:"center",gap:8}}>⚠️ {erro}</div>}
+
+          <button onClick={handleLogin} disabled={loading} style={{background:loading?"#444":C.orange,border:"none",borderRadius:12,padding:"13px",fontSize:16,fontWeight:700,color:C.white,cursor:loading?"not-allowed":"pointer",fontFamily:"Calibri,sans-serif",transition:"all .15s",marginTop:4,boxShadow:loading?"none":`0 4px 16px ${C.orange}44`,display:"flex",alignItems:"center",justifyContent:"center",gap:10}}>
+            {loading
+              ? <><div style={{width:18,height:18,border:"2px solid rgba(255,255,255,0.3)",borderTopColor:"#fff",borderRadius:"50%",animation:"spin .7s linear infinite"}}/> Entrando...</>
+              : "Entrar →"
+            }
+          </button>
+        </div>
+
+        <div style={{marginTop:22,padding:"14px",background:"rgba(255,255,255,0.03)",borderRadius:10,border:`1px solid ${C.dark3}`}}>
+          <div style={{fontSize:11,color:C.gray,fontFamily:"Calibri,sans-serif",marginBottom:6,fontWeight:700,textTransform:"uppercase",letterSpacing:"0.07em"}}>Acesso demo</div>
+          <div style={{fontSize:12,color:"#666",fontFamily:"Calibri,sans-serif",lineHeight:1.8}}>
+            Admin: <span style={{color:C.orange,cursor:"pointer"}} onClick={()=>{setEmail("polex.com");setSenha("12345");}}>polex.com</span> / 12345
+          </div>
+        </div>
+      </div>
+      <div style={{textAlign:"center",marginTop:20,fontSize:12,color:"#333",fontFamily:"Calibri,sans-serif"}}>© 2025 Polex Full — Todos os direitos reservados</div>
+    </div>
+    <style>{`@keyframes spin{to{transform:rotate(360deg)}}`}</style>
+  </div>;
+}
+
+// ── TELA DE USUÁRIOS ──────────────────────────────────────────────────
+function PageUsuarios({usuarioLogado}){
+  const getUsers = () => { try{ return JSON.parse(localStorage.getItem("polex_users")||"null")||INIT_USERS; }catch(e){ return INIT_USERS; } };
+  const saveUsers = u => localStorage.setItem("polex_users", JSON.stringify(u));
+
+  const [users,setUsers]       = useState(getUsers);
+  const [showForm,setShowForm] = useState(false);
+  const [editUser,setEditUser] = useState(null);
+  const [confirmDel,setConfirmDel] = useState(null);
+
+  const EMPTY_FORM = {nome:"",email:"",senha:"",perfil:"usuario",ativo:true};
+  const [form,setForm] = useState(EMPTY_FORM);
+  const [formErro,setFormErro] = useState("");
+
+  const abrirNovo  = () => { setForm(EMPTY_FORM); setEditUser(null); setFormErro(""); setShowForm(true); };
+  const abrirEditar = u => { setForm({...u}); setEditUser(u); setFormErro(""); setShowForm(true); };
+  const set = (k,v) => setForm(f=>({...f,[k]:v}));
+
+  const salvar = () => {
+    setFormErro("");
+    if(!form.nome.trim())  { setFormErro("Nome é obrigatório."); return; }
+    if(!form.email.trim()) { setFormErro("E-mail é obrigatório."); return; }
+    if(!form.senha.trim()) { setFormErro("Senha é obrigatória."); return; }
+    const lista = getUsers();
+    const emailDup = lista.find(u=>u.email.toLowerCase()===form.email.toLowerCase()&&u.id!==editUser?.id);
+    if(emailDup){ setFormErro("Este e-mail já está cadastrado."); return; }
+    let nova;
+    if(editUser){
+      nova = lista.map(u=>u.id===editUser.id?{...form,id:u.id,criado:u.criado}:u);
+    } else {
+      nova = [...lista,{...form,id:Date.now(),criado:new Date().toLocaleDateString("pt-BR")}];
+    }
+    saveUsers(nova); setUsers(nova); setShowForm(false);
+  };
+
+  const toggleAtivo = u => {
+    const nova = users.map(x=>x.id===u.id?{...x,ativo:!x.ativo}:x);
+    saveUsers(nova); setUsers(nova);
+  };
+
+  const deletar = u => {
+    const nova = users.filter(x=>x.id!==u.id);
+    saveUsers(nova); setUsers(nova); setConfirmDel(null);
+  };
+
+  const isAdmin = usuarioLogado?.perfil==="admin";
+  const inp={width:"100%",border:`1px solid ${C.border}`,borderRadius:8,padding:"9px 12px",fontSize:14,fontFamily:"Calibri,sans-serif",color:C.black,outline:"none",background:C.white};
+  const lbl={fontSize:11,fontWeight:700,color:C.gray,textTransform:"uppercase",letterSpacing:"0.07em",fontFamily:"Calibri,sans-serif",marginBottom:4,display:"block"};
+
+  return <div style={{paddingBottom:40}}>
+    <div style={{padding:"22px 28px 0",display:"flex",alignItems:"center",justifyContent:"space-between",flexWrap:"wrap",gap:12}}>
+      <div>
+        <div style={{fontFamily:"Calibri,sans-serif",fontWeight:700,fontSize:22,color:C.black}}>Usuários</div>
+        <div style={{fontSize:13,color:C.gray,marginTop:2}}>Gerencie os acessos ao sistema</div>
+      </div>
+      {isAdmin && <button onClick={abrirNovo} className="btn-orange">➕ Novo Usuário</button>}
+    </div>
+
+    {!isAdmin && <div style={{margin:"20px 28px 0",background:"#FEF2F2",border:"1px solid #FECACA",borderRadius:12,padding:"14px 18px",fontSize:14,color:C.red,fontFamily:"Calibri,sans-serif"}}>⛔ Apenas administradores podem gerenciar usuários.</div>}
+
+    {/* Grid de usuários */}
+    <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(300px,1fr))",gap:14,padding:"20px 28px 0"}}>
+      {users.map((u,i)=>{
+        const pc = PERFIL_CFG[u.perfil]||PERFIL_CFG.usuario;
+        const isMe = u.id===usuarioLogado?.id;
+        return <div key={u.id} style={{background:C.white,border:`1px solid ${isMe?C.orange:C.border}`,borderRadius:14,padding:"18px 20px",boxShadow:isMe?`0 0 0 2px ${C.orange}33`:"0 1px 4px rgba(0,0,0,0.06)",animation:`cardIn .3s ${i*60}ms ease both`,position:"relative"}}>
+          {isMe && <div style={{position:"absolute",top:12,right:12,fontSize:10,background:C.orangeBg,color:C.orangeD,border:`1px solid ${C.orangeBorder}`,borderRadius:20,padding:"2px 8px",fontWeight:700,fontFamily:"Calibri,sans-serif"}}>Você</div>}
+          {/* Avatar */}
+          <div style={{display:"flex",alignItems:"center",gap:14,marginBottom:14}}>
+            <div style={{width:46,height:46,background:pc.bg,border:`2px solid ${pc.border}`,borderRadius:14,display:"flex",alignItems:"center",justifyContent:"center",fontSize:22,flexShrink:0}}>{pc.icon}</div>
+            <div style={{flex:1,minWidth:0}}>
+              <div style={{fontFamily:"Calibri,sans-serif",fontWeight:700,fontSize:15,color:C.black,whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis"}}>{u.nome}</div>
+              <div style={{fontSize:12,color:C.gray,fontFamily:"Calibri,sans-serif",whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis"}}>{u.email}</div>
+            </div>
+          </div>
+          {/* Info */}
+          <div style={{display:"flex",gap:8,alignItems:"center",marginBottom:14,flexWrap:"wrap"}}>
+            <span style={{background:pc.bg,color:pc.text,border:`1px solid ${pc.border}`,borderRadius:20,padding:"3px 10px",fontSize:11,fontWeight:700}}>{pc.label}</span>
+            <span style={{background:u.ativo?"#F0FDF4":"#F5F5F5",color:u.ativo?C.green:C.gray,border:`1px solid ${u.ativo?"#BBF7D0":C.border}`,borderRadius:20,padding:"3px 10px",fontSize:11,fontWeight:700}}>{u.ativo?"● Ativo":"○ Inativo"}</span>
+          </div>
+          <div style={{fontSize:12,color:C.gray,fontFamily:"Calibri,sans-serif",marginBottom:14}}>📅 Criado em {u.criado}</div>
+          {/* Ações */}
+          {isAdmin && <div style={{display:"flex",gap:8,borderTop:`1px solid ${C.border}`,paddingTop:12}}>
+            <button onClick={()=>abrirEditar(u)} style={{flex:1,background:C.grayBg,border:`1px solid ${C.border}`,borderRadius:8,padding:"7px",fontSize:12,fontWeight:700,color:C.dark,cursor:"pointer",fontFamily:"Calibri,sans-serif",transition:"all .15s"}}>✏️ Editar</button>
+            <button onClick={()=>toggleAtivo(u)} style={{flex:1,background:u.ativo?"#FEF2F2":"#F0FDF4",border:`1px solid ${u.ativo?"#FECACA":"#BBF7D0"}`,borderRadius:8,padding:"7px",fontSize:12,fontWeight:700,color:u.ativo?C.red:C.green,cursor:"pointer",fontFamily:"Calibri,sans-serif",transition:"all .15s"}}>{u.ativo?"🔒 Desativar":"🔓 Ativar"}</button>
+            {!isMe && <button onClick={()=>setConfirmDel(u)} style={{background:"#FEF2F2",border:"1px solid #FECACA",borderRadius:8,padding:"7px 10px",fontSize:14,color:C.red,cursor:"pointer",transition:"all .15s"}}>🗑️</button>}
+          </div>}
+        </div>;
+      })}
+    </div>
+
+    {/* Modal form novo/editar usuário */}
+    {showForm && <div onClick={()=>setShowForm(false)} style={{position:"fixed",inset:0,background:"rgba(0,0,0,0.6)",backdropFilter:"blur(6px)",zIndex:300,display:"flex",alignItems:"center",justifyContent:"center",padding:20}}>
+      <div onClick={e=>e.stopPropagation()} style={{background:C.white,borderRadius:20,width:"100%",maxWidth:480,boxShadow:"0 30px 80px rgba(0,0,0,0.3)",animation:"modalIn .25s cubic-bezier(.16,1,.3,1)"}}>
+        <div style={{padding:"20px 24px 16px",borderBottom:`1px solid ${C.border}`,display:"flex",justifyContent:"space-between",alignItems:"center",background:C.dark,borderRadius:"20px 20px 0 0"}}>
+          <div>
+            <div style={{fontFamily:"Calibri,sans-serif",fontWeight:700,fontSize:19,color:C.white}}>{editUser?"✏️ Editar Usuário":"➕ Novo Usuário"}</div>
+            <div style={{fontSize:12,color:C.gray,marginTop:2}}>Preencha os dados de acesso</div>
+          </div>
+          <button onClick={()=>setShowForm(false)} style={{background:"rgba(255,255,255,0.08)",border:"1px solid rgba(255,255,255,0.12)",borderRadius:8,color:C.grayL,width:32,height:32,cursor:"pointer",fontSize:14}}>✕</button>
+        </div>
+        <div style={{padding:24,display:"flex",flexDirection:"column",gap:14}}>
+          <div><label style={lbl}>Nome completo</label><input value={form.nome} onChange={e=>set("nome",e.target.value)} placeholder="Ex: João Silva" style={inp}/></div>
+          <div><label style={lbl}>E-mail</label><input type="email" value={form.email} onChange={e=>set("email",e.target.value)} placeholder="joao@email.com" style={inp}/></div>
+          <div><label style={lbl}>Senha</label><input type="password" value={form.senha} onChange={e=>set("senha",e.target.value)} placeholder="Mínimo 6 caracteres" style={inp}/></div>
+          <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:12}}>
+            <div><label style={lbl}>Perfil</label>
+              <select value={form.perfil} onChange={e=>set("perfil",e.target.value)} style={{...inp}}>
+                <option value="usuario">Usuário</option>
+                <option value="admin">Administrador</option>
+              </select>
+            </div>
+            <div><label style={lbl}>Status</label>
+              <select value={form.ativo?"sim":"nao"} onChange={e=>set("ativo",e.target.value==="sim")} style={{...inp}}>
+                <option value="sim">Ativo</option>
+                <option value="nao">Inativo</option>
+              </select>
+            </div>
+          </div>
+          {formErro && <div style={{background:"rgba(229,53,53,0.08)",border:"1px solid rgba(229,53,53,0.25)",borderRadius:8,padding:"10px 14px",fontSize:13,color:C.red,fontFamily:"Calibri,sans-serif"}}>⚠️ {formErro}</div>}
+          <div style={{display:"flex",gap:10,justifyContent:"flex-end",marginTop:4}}>
+            <button onClick={()=>setShowForm(false)} style={{background:C.grayBg,border:`1px solid ${C.border}`,borderRadius:10,padding:"10px 22px",fontSize:14,fontWeight:600,color:C.gray,cursor:"pointer",fontFamily:"Calibri,sans-serif"}}>Cancelar</button>
+            <button onClick={salvar} style={{background:C.orange,border:"none",borderRadius:10,padding:"10px 28px",fontSize:14,fontWeight:700,color:C.white,cursor:"pointer",fontFamily:"Calibri,sans-serif"}}>💾 Salvar</button>
+          </div>
+        </div>
+      </div>
+    </div>}
+
+    {/* Confirmação de exclusão */}
+    {confirmDel && <div onClick={()=>setConfirmDel(null)} style={{position:"fixed",inset:0,background:"rgba(0,0,0,0.6)",backdropFilter:"blur(6px)",zIndex:400,display:"flex",alignItems:"center",justifyContent:"center",padding:20}}>
+      <div onClick={e=>e.stopPropagation()} style={{background:C.white,borderRadius:16,padding:"28px",maxWidth:360,width:"100%",textAlign:"center",boxShadow:"0 20px 60px rgba(0,0,0,0.3)",animation:"modalIn .2s ease"}}>
+        <div style={{fontSize:40,marginBottom:12}}>🗑️</div>
+        <div style={{fontFamily:"Calibri,sans-serif",fontWeight:700,fontSize:18,color:C.black,marginBottom:8}}>Excluir usuário?</div>
+        <div style={{fontSize:14,color:C.gray,fontFamily:"Calibri,sans-serif",marginBottom:22}}>O usuário <strong>{confirmDel.nome}</strong> será removido permanentemente.</div>
+        <div style={{display:"flex",gap:10,justifyContent:"center"}}>
+          <button onClick={()=>setConfirmDel(null)} style={{background:C.grayBg,border:`1px solid ${C.border}`,borderRadius:10,padding:"10px 22px",fontSize:14,fontWeight:600,color:C.gray,cursor:"pointer",fontFamily:"Calibri,sans-serif"}}>Cancelar</button>
+          <button onClick={()=>deletar(confirmDel)} style={{background:C.red,border:"none",borderRadius:10,padding:"10px 22px",fontSize:14,fontWeight:700,color:C.white,cursor:"pointer",fontFamily:"Calibri,sans-serif"}}>Excluir</button>
+        </div>
+      </div>
+    </div>}
+  </div>;
+}
+
+// ── APP ROOT ──────────────────────────────────────────────────────────
+function App(){
+  const [logado,setLogado]         = useState(null);
+  const [page,setPage]             = useState("dashboard");
+  const [processos,setProcessos]   = useState(INIT_PROCESSOS);
+  const [selected,setSelected]     = useState(null);
+  const [editando,setEditando]     = useState(null);
+  const [menuUser,setMenuUser]     = useState(false);
+
+  const addPedido  = p => setProcessos(prev=>[...prev,p]);
+  const editPedido = p => setProcessos(prev=>prev.map(x=>x.id===p.id?p:x));
+  const handleEdit = p => { setSelected(null); setEditando(p); };
+  const handleSaveEdit = p => { editPedido(p); setEditando(null); setSelected(p); };
+
+  const handleLogin  = user => setLogado(user);
+  const handleLogout = () => {
+    localStorage.removeItem("polex_session");
+    localStorage.removeItem("polex_saved_login");
+    setLogado(null); setPage("dashboard"); setMenuUser(false);
+  };
+
+  if(!logado) return <PageLogin onLogin={handleLogin}/>;
+
+  const isAdmin = logado.perfil==="admin";
+  const NAV=[
+    {k:"dashboard",  l:"Dashboard",  i:"📊"},
+    {k:"pedidos",    l:"Pedidos",    i:"📦"},
+    {k:"financeiro", l:"Financeiro", i:"💰"},
+    ...(isAdmin?[{k:"usuarios",l:"Usuários",i:"👥"}]:[]),
+  ];
+
+  return <div style={{display:"flex",minHeight:"100vh",fontFamily:"Calibri,sans-serif",background:C.grayBg}}>
+    {/* SIDEBAR */}
+    <aside style={{width:220,background:C.black,display:"flex",flexDirection:"column",position:"sticky",top:0,height:"100vh",flexShrink:0,zIndex:50}}>
+      <div style={{padding:"22px 18px 18px",borderBottom:`1px solid ${C.dark3}`}}><Logo size={36}/></div>
+      <div style={{height:3,background:`linear-gradient(90deg,${C.orange},${C.orangeL},transparent)`}}/>
+      <nav style={{padding:"18px 10px",flex:1}}>
+        <div style={{fontSize:10,color:C.dark3,textTransform:"uppercase",letterSpacing:"0.1em",fontWeight:700,marginBottom:10,paddingLeft:8,fontFamily:"Calibri,sans-serif"}}>Menu</div>
+        {NAV.map(n=><button key={n.k} onClick={()=>setPage(n.k)} className={`sidebar-btn${page===n.k?" active":""}`}>
+          <span style={{fontSize:17}}>{n.i}</span>{n.l}
+        </button>)}
+      </nav>
+      {/* Usuário logado */}
+      <div style={{padding:"12px 14px",borderTop:`1px solid ${C.dark3}`,position:"relative"}}>
+        <button onClick={()=>setMenuUser(m=>!m)} style={{width:"100%",display:"flex",alignItems:"center",gap:10,background:"rgba(255,255,255,0.04)",border:`1px solid ${C.dark3}`,borderRadius:10,padding:"10px 12px",cursor:"pointer",transition:"all .15s"}}>
+          <div style={{width:32,height:32,background:C.orange,borderRadius:10,display:"flex",alignItems:"center",justifyContent:"center",fontSize:16,flexShrink:0}}>
+            {PERFIL_CFG[logado.perfil]?.icon||"👤"}
+          </div>
+          <div style={{flex:1,minWidth:0,textAlign:"left"}}>
+            <div style={{fontSize:13,fontWeight:700,color:C.white,fontFamily:"Calibri,sans-serif",whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis"}}>{logado.nome.split(" ")[0]}</div>
+            <div style={{fontSize:10,color:C.gray,fontFamily:"Calibri,sans-serif"}}>{PERFIL_CFG[logado.perfil]?.label}</div>
+          </div>
+          <span style={{fontSize:12,color:C.gray}}>⌃</span>
+        </button>
+        {/* Dropdown menu usuário */}
+        {menuUser && <div style={{position:"absolute",bottom:"calc(100% + 4px)",left:14,right:14,background:C.dark2,border:`1px solid ${C.dark3}`,borderRadius:12,overflow:"hidden",boxShadow:"0 -8px 24px rgba(0,0,0,0.4)",animation:"modalIn .15s ease"}}>
+          <div style={{padding:"12px 14px",borderBottom:`1px solid ${C.dark3}`}}>
+            <div style={{fontSize:13,fontWeight:700,color:C.white,fontFamily:"Calibri,sans-serif"}}>{logado.nome}</div>
+            <div style={{fontSize:11,color:C.gray,fontFamily:"Calibri,sans-serif",marginTop:2}}>{logado.email}</div>
+          </div>
+          {isAdmin && <button onClick={()=>{setPage("usuarios");setMenuUser(false);}} style={{width:"100%",display:"flex",alignItems:"center",gap:9,padding:"11px 14px",background:"none",border:"none",color:C.grayL,cursor:"pointer",fontSize:13,fontFamily:"Calibri,sans-serif",transition:"background .15s",textAlign:"left"}}>
+            👥 Gerenciar Usuários
+          </button>}
+          <button onClick={handleLogout} style={{width:"100%",display:"flex",alignItems:"center",gap:9,padding:"11px 14px",background:"none",border:"none",color:C.red,cursor:"pointer",fontSize:13,fontFamily:"Calibri,sans-serif",fontWeight:700,transition:"background .15s",textAlign:"left",borderTop:`1px solid ${C.dark3}`}}>
+            🚪 Sair do sistema
+          </button>
+          <button onClick={()=>{localStorage.removeItem("polex_session");localStorage.removeItem("polex_saved_login");setLogado(null);setPage("dashboard");setMenuUser(false);}} style={{width:"100%",display:"flex",alignItems:"center",gap:9,padding:"10px 14px",background:"none",border:"none",color:"#555",cursor:"pointer",fontSize:12,fontFamily:"Calibri,sans-serif",transition:"background .15s",textAlign:"left"}}>
+            🔓 Sair e esquecer login
+          </button>
+        </div>}
+      </div>
+    </aside>
+
+    {/* MAIN */}
+    <main style={{flex:1,overflowY:"auto",paddingBottom:60}} onClick={()=>menuUser&&setMenuUser(false)}>
+      {page==="dashboard"  && <PageDashboard  processos={processos} setSelected={setSelected}/>}
+      {page==="pedidos"    && <PagePedidos    processos={processos} onAddPedido={addPedido} setSelected={setSelected}/>}
+      {page==="financeiro" && <PageFinanceiro processos={processos}/>}
+      {page==="usuarios"   && <PageUsuarios   usuarioLogado={logado}/>}
+    </main>
+
+    {/* Modais */}
+    {selected && <ModalDetalhe p={selected} onClose={()=>setSelected(null)} onEdit={handleEdit}/>}
+    {editando  && <ModalEditar p={editando}  onSave={handleSaveEdit} onClose={()=>setEditando(null)}/>}
+  </div>;
+}
+
+ReactDOM.createRoot(document.getElementById("root")).render(<App/>);
+</script>
+</body>
+</html>
